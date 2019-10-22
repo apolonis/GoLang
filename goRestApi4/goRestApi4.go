@@ -88,6 +88,8 @@ func Createuser(w http.ResponseWriter, r *http.Request) {
 
 	json.Unmarshal(reqBody, &newUser)
 
+	newUser.Roles = []Roles{Roles{Name: "USER"}}
+
 	db.Create(&newUser)
 
 	fmt.Fprintf(w, "New user has been created!")
