@@ -13,10 +13,10 @@ import (
 
 var (
 	//device string = "en0"
-	device  string = "enp3s0"
-	snaplen int32  = 65535
+	device  string = "enp3s0" // name of device
+	snaplen int32  = 65535    // how many bytes ur going to collect
 	//snaplen int32 = 353540
-	promisc bool = false
+	promisc bool = false // promiscuous mode
 	err     error
 	timeout time.Duration = -1 * time.Second
 	handle  *pcap.Handle
