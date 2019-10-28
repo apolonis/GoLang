@@ -5,10 +5,13 @@ import (
 	"log"
 	"time"
 
-	"github.com/google/gopacket/layers"
-
 	"github.com/google/gopacket"
+	"github.com/google/gopacket/layers"
 	"github.com/google/gopacket/pcap"
+
+	"encoding/json"
+
+	"github.com/tecbot/gorocksdb"
 )
 
 var (
@@ -21,6 +24,16 @@ var (
 	timeout time.Duration = -1 * time.Second
 	handle  *pcap.Handle
 )
+
+type Infor struct {
+	SourceAddress      string `json:"SourceAddress"`
+	DestinationAddress string `json:"DestinationAddress"`
+	Protocol           string `json:"Protocol"`
+	ICMPCode           string `json:"ICMPCode"`
+	ICMPSequenceNumber string `json:"ICMPSequenceNumber"`
+	PayloadDataLength  string `json:"PayloadDataLength"`
+	PayloadData        string `json:"PayloadData"`
+}
 
 func main() {
 
@@ -96,6 +109,34 @@ func main() {
 		fmt.Println("Payload data to string: ", string(icmp_packet.Payload))
 		fmt.Println("-------------------\n")
 		//	fmt.Println(packet)
+
+		informationVar := Infor{SourceAddress: ip_packet.SrcIP.String(), //working
+			DestinationAddress: ip_packet.DstIP.String(),         //working
+			Protocol:           ip_packet.Protocol.String(),      //working
+			ICMPCode:           icmp_packet.TypeCode.String(),    //working
+			ICMPSequenceNumber: string(icmp_packet.Seq),          //not
+			PayloadDataLength:  string(len(icmp_packet.Payload)), //working
+			PayloadData:        string(icmp_packet.Payload)}      //not
+
+		opts := gorocksdb.NewDefaultOptions()
+		opts.SetCreateIfMissing(true)
+		db, err := gorocksdb.OpenDb(opts, "test3.db")
+		if err != nil {
+			fmt.Println(err)
+		}
+
+		wo := gorocksdb.NewDefaultWriteOptions()
+
+		informationPars, err := json.Marshal(informationVar)
+
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+
+		db.Put(wo, []byte("nekiAttack"), []byte(informationPars))
+
+		db.Close()
 
 	}
 
