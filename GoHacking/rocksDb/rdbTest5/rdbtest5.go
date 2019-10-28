@@ -27,6 +27,7 @@ var (
 
 //Structure like class in oop with the atributes we need and collect from ping
 type Infor struct {
+	Time               string `json:"Time"`
 	SourceAddress      string `json:"SourceAddress"`
 	DestinationAddress string `json:"DestinationAddress"`
 	Protocol           string `json:"Protocol"`
@@ -47,7 +48,7 @@ func convert(b []byte) string {
 
 func main() {
 	//This variable is created to be a common key in database
-	var attack string
+	var ping string
 	//Count is for attack variable to change after every ping(attack)
 	count := 0
 
@@ -77,6 +78,8 @@ func main() {
 
 	//For is to go through all packeges we collect
 	for packet := range packetSource.Packets() {
+		//Needed the time when packet is recived
+		theTimeNow := time.Now()
 
 		ethernet_layer := packet.Layer(layers.LayerTypeEthernet)
 		ethernet_frame := ethernet_layer.(*layers.Ethernet)
@@ -123,6 +126,7 @@ func main() {
 		}
 
 		fmt.Println("-------------------")
+		fmt.Println("Time: ", theTimeNow)
 		fmt.Println("Source address: " + ip_packet.SrcIP.String())
 		fmt.Println("Destination Address: " + ip_packet.DstIP.String())
 		fmt.Println("Protocol: ", ip_packet.Protocol)
@@ -133,11 +137,11 @@ func main() {
 		fmt.Println("Payload data: ", icmp_packet.Payload)
 		fmt.Println("Payload data string format: ",
 			convert(icmp_packet.Payload))
-
 		fmt.Println("-------------------\n")
 
 		//Constructor and creating new struct type (class)
 		informationVar := Infor{SourceAddress: ip_packet.SrcIP.String(),
+			Time:               theTimeNow.String(),
 			DestinationAddress: ip_packet.DstIP.String(),
 			Protocol:           ip_packet.Protocol.String(),
 			ICMPCode:           icmp_packet.TypeCode.String(),
@@ -145,21 +149,21 @@ func main() {
 			PayloadDataLength:  strconv.Itoa(int(len(icmp_packet.Payload))), //Converting to string all arguments
 			PayloadData:        convert(icmp_packet.Payload)}
 
-		attack = ("attack" + strconv.Itoa(count))
+		ping = ("ping" + strconv.Itoa(count))
 
-		db.Put(wo, []byte(attack), []byte("aloha"))
+		db.Put(wo, []byte(ping+"/Time"), []byte(informationVar.Time))
 
-		db.Put(wo, []byte(attack+"/DestinationAddress"), []byte(informationVar.DestinationAddress))
+		db.Put(wo, []byte(ping+"/DestinationAddress"), []byte(informationVar.DestinationAddress))
 
-		db.Put(wo, []byte(attack+"/Protocol"), []byte(informationVar.Protocol))
+		db.Put(wo, []byte(ping+"/Protocol"), []byte(informationVar.Protocol))
 
-		db.Put(wo, []byte(attack+"/ICMPCode"), []byte(informationVar.ICMPCode))
+		db.Put(wo, []byte(ping+"/ICMPCode"), []byte(informationVar.ICMPCode))
 
-		db.Put(wo, []byte(attack+"/ICMPSequenceNumber"), []byte(informationVar.ICMPSequenceNumber))
+		db.Put(wo, []byte(ping+"/ICMPSequenceNumber"), []byte(informationVar.ICMPSequenceNumber))
 
-		db.Put(wo, []byte(attack+"/PayloadDataLength"), []byte(informationVar.PayloadDataLength))
+		db.Put(wo, []byte(ping+"/PayloadDataLength"), []byte(informationVar.PayloadDataLength))
 
-		db.Put(wo, []byte(attack+"/PayloadData"), []byte(informationVar.PayloadData))
+		db.Put(wo, []byte(ping+"/PayloadData"), []byte(informationVar.PayloadData))
 
 		count++
 
