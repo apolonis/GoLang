@@ -28,7 +28,6 @@ var (
 //Structure like class in oop with the atributes we need and collect from ping
 type Infor struct {
 	Time               string `json:"Time"`
-	SourceAddress      string `json:"SourceAddress"`
 	DestinationAddress string `json:"DestinationAddress"`
 	Protocol           string `json:"Protocol"`
 	ICMPCode           string `json:"ICMPCode"`
@@ -46,16 +45,15 @@ func convert(b []byte) string {
 	return strings.Join(s, ",")
 }
 
-func main() {
-	//This variable is created to be a common key in database
+func readPingAndWriteInDb() {
 	var ping string
 	//Count is for attack variable to change after every ping(attack)
 	count := 0
 
 	//Connection to database and creating if not exist
 	opts := gorocksdb.NewDefaultOptions()
-	opts.SetCreateIfMissing(true)
-	db, err := gorocksdb.OpenDb(opts, "test5.db")
+	//opts.SetCreateIfMissing(true)
+	db, err := gorocksdb.OpenDb(opts, "test7.db")
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -126,22 +124,22 @@ func main() {
 			}
 		}
 
-		fmt.Println("-------------------")
-		fmt.Println("Time: ", theTimeNow)
-		fmt.Println("Source address: " + ip_packet.SrcIP.String())
-		fmt.Println("Destination Address: " + ip_packet.DstIP.String())
-		fmt.Println("Protocol: ", ip_packet.Protocol)
+		// fmt.Println("-------------------")
+		// fmt.Println("Time: ", theTimeNow)
+		// fmt.Println("Source address: " + ip_packet.SrcIP.String())
+		// fmt.Println("Destination Address: " + ip_packet.DstIP.String())
+		// fmt.Println("Protocol: ", ip_packet.Protocol)
 
-		fmt.Println("ICMP Code: ", icmp_packet.TypeCode)
-		fmt.Println("ICMP Sequence Number: ", strconv.Itoa(int(icmp_packet.Seq)))
-		fmt.Println("Payload data length", len(icmp_packet.Payload))
-		fmt.Println("Payload data: ", icmp_packet.Payload)
-		// fmt.Println("Payload data string format: ",
-		// 	convert(icmp_packet.Payload))
-		fmt.Println("-------------------\n")
+		// fmt.Println("ICMP Code: ", icmp_packet.TypeCode)
+		// fmt.Println("ICMP Sequence Number: ", strconv.Itoa(int(icmp_packet.Seq)))
+		// fmt.Println("Payload data length", len(icmp_packet.Payload))
+		// fmt.Println("Payload data: ", icmp_packet.Payload)
+		// // fmt.Println("Payload data string format: ",
+		// // 	convert(icmp_packet.Payload))
+		// fmt.Println("-------------------\n")
 
 		//Constructor and creating new struct type (class)
-		informationVar := Infor{SourceAddress: ip_packet.SrcIP.String(),
+		informationVar := Infor{
 			Time:               theTimeNow.String(),
 			DestinationAddress: ip_packet.DstIP.String(),
 			Protocol:           ip_packet.Protocol.String(),
@@ -170,6 +168,87 @@ func main() {
 
 	}
 	db.Close()
-	//FOR READ AND SEARCH FROM THE KEY
-	//data, err := db.Get(ro, []byte("key"))
+}
+
+func readDataFromDb() {
+	opts := gorocksdb.NewDefaultOptions()
+	opts.SetCreateIfMissing(true)
+	db, err := gorocksdb.OpenDbForReadOnly(opts, "test7.db", true)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	ro := gorocksdb.NewDefaultReadOptions()
+
+	// vremeSutraPreteznoOblacno, err := db.Get(ro, []byte("ping0/Time"))
+
+	// fmt.Println(string(vremeSutraPreteznoOblacno.Data()))
+
+	var ping string
+	count := 0
+	packetSource := gopacket.NewPacketSource(handle, handle.LinkType())
+
+	//For is to go through all packeges we collect
+	for packet := range packetSource.Packets() {
+
+		packet.String()
+
+		ping = ("ping" + strconv.Itoa(count))
+		theTimeNow, err := db.Get(ro, []byte(ping+"/time"))
+		if err != nil {
+			fmt.Println("Error", err)
+		}
+
+		destinationAddress, err1 := db.Get(ro, []byte(ping+"/DestinationAddress"))
+		if err1 != nil {
+			fmt.Println("Error", err1)
+		}
+
+		protocol, err2 := db.Get(ro, []byte(ping+"/Protocol"))
+		if err2 != nil {
+			fmt.Println("Error", err2)
+		}
+
+		ICMPCode, err3 := db.Get(ro, []byte(ping+"/ICMPCode"))
+		if err3 != nil {
+			fmt.Println("Error", err3)
+		}
+
+		ICMPSequenceNumber, err4 := db.Get(ro, []byte(ping+"/ICMPSequenceNumber"))
+		if err4 != nil {
+			fmt.Println("Error", err4)
+		}
+
+		payloadDataLength, err5 := db.Get(ro, []byte(ping+"/PayloadDataLength"))
+		if err5 != nil {
+			fmt.Println("Error", err5)
+		}
+
+		payloadData, err6 := db.Get(ro, []byte(ping+"/PayloadData"))
+		if err6 != nil {
+			fmt.Println("Error", err6)
+		}
+
+		fmt.Println("-------------------")
+		fmt.Println("Time: ", string(theTimeNow.Data()))
+		fmt.Println("Destination Address: " + string(destinationAddress.Data()))
+		fmt.Println("Protocol: ", string(protocol.Data()))
+
+		fmt.Println("ICMP Code: ", string(ICMPCode.Data()))
+		fmt.Println("ICMP Sequence Number: ", string(ICMPSequenceNumber.Data()))
+		fmt.Println("Payload data length", string(payloadDataLength.Data()))
+		fmt.Println("Payload data: " + string(payloadData.Data()))
+		// fmt.Println("Payload data string format: ",
+		// 	convert(icmp_packet.Payload))
+		fmt.Println("-------------------\n")
+
+		count++
+	}
+
+	db.Close()
+}
+
+func main() {
+	go readPingAndWriteInDb()
+	go readDataFromDb()
 }
