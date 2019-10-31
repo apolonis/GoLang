@@ -38,8 +38,8 @@ func capture() {
 	}
 
 	var ping string
-
-	count := 0
+	var count int
+	count = 0
 
 	wo := gorocksdb.NewDefaultWriteOptions()
 
@@ -63,14 +63,14 @@ func capture() {
 		//Needed the time when packet is recived
 		theTimeNow := time.Now()
 
-		ip_layer := packet.Layer(layers.LayerTypeIPv4)
-		ip_packet, _ := ip_layer.(*layers.IPv4)
-		icmp_layer := packet.Layer(layers.LayerTypeICMPv4)
-		icmp_packet := icmp_layer.(*layers.ICMPv4)
+		iplayer := packet.Layer(layers.LayerTypeIPv4)
+		ippacket, _ := iplayer.(*layers.IPv4)
+		icmplayer := packet.Layer(layers.LayerTypeICMPv4)
+		icmppacket := icmplayer.(*layers.ICMPv4)
 
 		//this is only for testing if the packet is full or not
-		if icmp_packet.TypeCode.String() == "EchoRequest" {
-			if len(icmp_packet.Payload) > 0 {
+		if icmppacket.TypeCode.String() == "EchoRequest" {
+			if len(icmppacket.Payload) > 0 {
 				log.Println("Info: EchoRequest Recived")
 			} else {
 				log.Println("Warn: Empty EchoRequest Recived")
@@ -80,19 +80,21 @@ func capture() {
 
 		ping = ("ping" + strconv.Itoa(count))
 
+		fmt.Println("\n !!!!!!!!!! DEBUG: nil pointer !!!!!!!!!!!! \n")
+
 		db.Put(wo, []byte(ping+"/Time"), []byte(theTimeNow.String()))
 
-		db.Put(wo, []byte(ping+"/DestinationAddress"), []byte(ip_packet.DstIP.String()))
+		db.Put(wo, []byte(ping+"/DestinationAddress"), []byte(ippacket.DstIP.String()))
 
-		db.Put(wo, []byte(ping+"/Protocol"), []byte(ip_packet.Protocol.String()))
+		db.Put(wo, []byte(ping+"/Protocol"), []byte(ippacket.Protocol.String()))
 
-		db.Put(wo, []byte(ping+"/ICMPCode"), []byte(icmp_packet.TypeCode.String()))
+		db.Put(wo, []byte(ping+"/ICMPCode"), []byte(icmppacket.TypeCode.String()))
 
-		db.Put(wo, []byte(ping+"/ICMPSequenceNumber"), []byte(strconv.Itoa(int(icmp_packet.Seq))))
+		db.Put(wo, []byte(ping+"/ICMPSequenceNumber"), []byte(strconv.Itoa(int(icmppacket.Seq))))
 
-		db.Put(wo, []byte(ping+"/PayloadDataLength"), []byte(strconv.Itoa(int(len(icmp_packet.Payload)))))
+		db.Put(wo, []byte(ping+"/PayloadDataLength"), []byte(strconv.Itoa(int(len(icmppacket.Payload)))))
 
-		db.Put(wo, []byte(ping+"/PayloadData"), []byte(convert(icmp_packet.Payload)))
+		db.Put(wo, []byte(ping+"/PayloadData"), []byte(convert(icmppacket.Payload)))
 
 		count++
 

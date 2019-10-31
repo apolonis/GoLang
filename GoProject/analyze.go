@@ -27,12 +27,20 @@ func analyze() {
 		fmt.Println(err)
 	}
 
+	// opts := gorocksdb.NewDefaultOptions()
+	// opts.SetCreateIfMissing(true)
+	// db, err := gorocksdb.OpenDbForReadOnly(opts, "Example.db", true)
+	// if err != nil {
+	// 	fmt.Println(err)
+	// }
+
 	ro := gorocksdb.NewDefaultReadOptions()
 
 	var ping string
-	count := 0
+	var count int
+	count = 0
 
-	for i := 0; i < 10; i++ {
+	for i := 0; i < 5; i++ {
 
 		ping = ("ping" + strconv.Itoa(count))
 		theTimeNow, err := db.Get(ro, []byte(ping+"/time"))

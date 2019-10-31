@@ -25,8 +25,8 @@ func openDataBase() (*gorocksdb.DB, error) {
 }
 
 func main() {
-	// go captureTest()
-	// go analyzeTest()
+	//go captureTest()
+	//go analyzeTest()
 	go capture()
 	go analyze()
 	fmt.Scanln()
