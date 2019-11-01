@@ -75,6 +75,7 @@ func analyze() {
 	for {
 		fmt.Println("analyze")
 
+		//Searching by key
 		query := bleve.NewQueryStringQuery("protocol:ICMPv4")
 		request := bleve.NewSearchRequest(query)
 		results, err := index.Search(request)
@@ -105,6 +106,8 @@ func analyze() {
 			fmt.Println(pcapData)
 
 			time.Sleep(2 * time.Second)
+
 		}
 	}
+
 }

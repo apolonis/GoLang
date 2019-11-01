@@ -18,7 +18,7 @@ type PcapData struct {
 	PayloadData        string `json:"payloadData"`
 }
 
-//Opening a new index(and returning same index)
+//Opening a new index(and returning same)
 func openNewIndex() bleve.Index {
 	indexPath := "goProjectDemo.bleve"
 	mapping := bleve.NewIndexMapping()

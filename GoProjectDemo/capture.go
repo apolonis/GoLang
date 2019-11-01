@@ -13,6 +13,7 @@ import (
 	"github.com/pborman/uuid"
 )
 
+//Variable's for router
 var (
 	device  string = "enp3s0" // name of device
 	snaplen int32  = 65535    // how many bytes ur going to collect
@@ -24,26 +25,37 @@ var (
 
 //function for converting byte type to string
 func convert(b []byte) string {
+
 	s := make([]string, len(b))
+
 	for i := range b {
 		s[i] = strconv.Itoa(int(b[i]))
 	}
+
 	return strings.Join(s, ",")
 }
+
+/*Function capture (using pcap to catch the trafic by ping and
+using bleve index to store it)*/
 func capture() {
 
 	//opening a new index
 	index := openNewIndex()
 
+	//Openning pcap live (using variable's of router)
 	handle, err = pcap.OpenLive(device, snaplen, promisc, timeout)
+
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	defer handle.Close()
 
 	//Ip of the host
 	var filter string = "src host 192.168.1.106 and icmp"
+
 	err = handle.SetBPFFilter(filter)
+
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -70,7 +82,7 @@ func capture() {
 
 			}
 		}
-
+		//Generating uuid of PcapData(packet)
 		id := uuid.NewUUID()
 		//Converting to string all arguments
 		//Creating an object of a struct
@@ -90,6 +102,7 @@ func capture() {
 		if err != nil {
 			log.Fatal(err)
 		}
+
 		fmt.Println("Indexed Document")
 
 	}

@@ -1,14 +1,11 @@
 package main
 
-import (
-	"fmt"
-)
+import "fmt"
 
 func main() {
 
 	go capture()
 	go analyze()
-
 	fmt.Scanln()
 
 }
