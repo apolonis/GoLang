@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"runtime"
 	"strconv"
 	"strings"
 	"time"
@@ -16,7 +17,7 @@ import (
 //Variable's for router
 var (
 	device  string = "enp3s0" // name of device
-	snaplen int32  = 65535    // how many bytes ur going to collect
+	snaplen int32  = 65535    // how many bytes app is going to collect
 	promisc bool   = false    // promiscuous mode
 	err     error
 	timeout time.Duration = -1 * time.Second
@@ -39,14 +40,16 @@ func convert(b []byte) string {
 using bleve index to store it)*/
 func capture() {
 
-	//opening a new index
+	//opening a new index(take index opened in main)
+	indexMutex.Lock()
 	index := openNewIndex()
+	indexMutex.Unlock()
 
 	//Openning pcap live (using variable's of router)
 	handle, err = pcap.OpenLive(device, snaplen, promisc, timeout)
 
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("Error/opening device ", err)
 	}
 
 	defer handle.Close()
@@ -57,13 +60,14 @@ func capture() {
 	err = handle.SetBPFFilter(filter)
 
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("Error/filtering ", err)
 	}
 
 	packetSource := gopacket.NewPacketSource(handle, handle.LinkType())
 
 	//Go through all packeges we collect
 	for packet := range packetSource.Packets() {
+		fmt.Println("capture")
 
 		//Needed the time when packet is recived
 		theTimeNow := time.Now()
@@ -82,8 +86,10 @@ func capture() {
 
 			}
 		}
+
 		//Generating uuid of PcapData(packet)
 		id := uuid.NewUUID()
+
 		//Converting to string all arguments
 		//Creating an object of a struct
 		pcapData := PcapData{
@@ -100,11 +106,12 @@ func capture() {
 		err := index.Index(pcapData.UUID, pcapData)
 
 		if err != nil {
-			log.Fatal(err)
+			log.Fatal("Error/indexing", err)
 		}
 
 		fmt.Println("Indexed Document")
-
+		// time.Sleep(1 * time.Millisecond)
+		runtime.Gosched()
 	}
 
 }

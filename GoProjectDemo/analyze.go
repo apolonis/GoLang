@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"runtime"
 	"time"
 
 	"github.com/blevesearch/bleve"
@@ -68,9 +69,10 @@ func getDocsFromSearchResults(
 
 //Function analyze (searching all data from bleve)
 func analyze() {
-
-	//opening a new index
+	//opening a new index(take index opened in main)
+	indexMutex.Lock()
 	index := openNewIndex()
+	indexMutex.Unlock()
 
 	for {
 		fmt.Println("analyze")
@@ -81,7 +83,7 @@ func analyze() {
 		results, err := index.Search(request)
 
 		if err != nil {
-			log.Fatal(err)
+			log.Fatal("Error/Searhing index", err)
 		}
 		//curent struct for formating documents
 		type Doc struct {
@@ -98,16 +100,18 @@ func analyze() {
 			err := json.Unmarshal(d, &stringInterfaceMap)
 
 			if err != nil {
-				log.Fatal("ERROR", err)
-
+				log.Fatal("Error/unmarshaling json", err)
 			}
-			//Taking doc type field ('fields') and creating new variable
+			//Taking doc type field ('fields') and creating new variable of type PcapData
 			var pcapData PcapData = stringInterfaceMap.Fields
+			_ = pcapData
 			fmt.Println(pcapData)
 
 			time.Sleep(2 * time.Second)
-
 		}
+
+		time.Sleep(2 * time.Second)
+		runtime.Gosched()
 	}
 
 }

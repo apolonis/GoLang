@@ -31,10 +31,8 @@ type Users struct {
 }
 type Roles struct {
 	gorm.Model
-	//RolesId string  `sql:"type:varchar(36);primary key"`
-	//	Roles_ID string `gorm:"primary_key:true"`
+
 	Name string `json:"roles"`
-	//Users []Users `gorm:"many2many:user_role" json:"users"`
 }
 
 func InitialMigration() {
